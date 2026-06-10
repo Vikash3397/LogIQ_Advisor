@@ -4,11 +4,43 @@ LogIQ Advisor is a Cursor-native, three-agent pipeline that turns raw log files 
 clear, actionable diagnostics: an error summary, a validated root cause, and resolution
 steps, persisted as machine-readable JSON.
 
+## Pipeline flow
+
+```mermaid
+flowchart TD
+    subgraph inputs [Inputs]
+        logs["Log files (.txt / .log / .csv / .xlsx)<br/>data/input/"]
+        app["app_name"]
+    end
+
+    orchestrator["/logiq-run or stage-by-stage agents"]
+
+    logs --> orchestrator
+    app --> orchestrator
+
+    orchestrator --> collect
+
+    collect["Stage 1 — Log Collector<br/>logiq-collect · Python parser"]
+    collect --> errors["errors.json"]
+
+    errors --> research
+
+    research["Stage 2 — Log Researcher<br/>logiq-research · Web + Glean MCP (BMC Helix)"]
+    research --> research_json["research.json"]
+
+    errors --> synthesize
+    research_json --> synthesize
+
+    synthesize["Stage 3 — Log Synthesizer<br/>logiq-synthesize"]
+    synthesize --> resolution["resolution.json<br/>error summary · root cause · steps"]
+
+    errors -.-> runs["data/runs/&lt;run_id&gt;/"]
+    research_json -.-> runs
+    resolution -.-> runs
 ```
-logs + app_name --> [1. Collector] --> errors.json
-errors.json      --> [2. Researcher] --> research.json   (web + Glean MCP / BMC Helix)
-errors.json + research.json --> [3. Synthesizer] --> resolution.json
-```
+
+Each stage writes under `data/runs/<run_id>/`. A new Collector run clears prior run
+directories so only the latest artifacts remain.
 
 ## Agents
 
