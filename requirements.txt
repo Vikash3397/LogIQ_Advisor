@@ -1,0 +1,4 @@
+# LogIQ Advisor - deterministic helper dependencies.
+# Core parsing (txt/log/csv) and persistence use the Python standard library.
+openpyxl>=3.1.0      # .xlsx log parsing
+python-dateutil>=2.9.0  # flexible timestamp parsing (optional helpers)

@@ -1,0 +1,127 @@
+---
+description: LogIQ Advisor pipeline overview, data contracts, run conventions
+alwaysApply: true
+---
+
+# LogIQ Advisor - Pipeline Overview
+
+LogIQ Advisor is a three-stage, agent-based log-analysis pipeline. Each stage is a
+specialized agent with a strict scope. Deterministic work (parsing, schema validation,
+JSON persistence) is done by Python scripts in the `logiq/` package; reasoning, research,
+and synthesis are done by the corresponding agent.
+
+## Stages
+
+Each stage is a custom agent in `.cursor/agents/`, invocable with `/<name>`:
+
+1. Log Collector (`logiq-collect`): parse raw logs -> `errors.json`
+2. Log Researcher (`logiq-research`): research each error (web + Glean MCP) -> `research.json`
+3. Log Synthesizer (`logiq-synthesize`): consolidate -> `resolution.json`
+
+The `/logiq-run` command orchestrates all three in order.
+
+```
+logs + app_name --> [Collector] --> errors.json
+errors.json      --> [Researcher] --> research.json
+errors.json + research.json --> [Synthesizer] --> resolution.json
+```
+
+## Application name argument
+
+Every run is scoped to an application. The application name is provided as an input
+argument (`--app-name` for the Python CLI, `<app-name>` for the slash commands). It is
+written into `errors.json` and propagated through every stage. The Researcher uses it to
+build targeted Glean MCP / BMC Helix ITSM queries.
+
+## Input path
+
+The log input path is optional. When omitted it defaults to the repo's `data/input/`
+folder (`--input` for the Python CLI). `/logiq-run` takes only `<app-name>` and always
+reads from `data/input/`.
+
+## Run directory convention
+
+All artifacts for a single run live under `data/runs/<run_id>/`:
+
+- `data/runs/<run_id>/errors.json` (Collector output)
+- `data/runs/<run_id>/research.json` (Researcher output)
+- `data/runs/<run_id>/resolution.json` (Synthesizer output, one summary per distinct error)
+
+`run_id` defaults to `<app_name>-<UTC-timestamp>` and is created by the Collector stage.
+Always reuse the same `run_id` across the three stages of one run.
+
+Each new Collector run clears `data/runs/` first (deletes all prior run directories)
+so only the current run's artifacts remain on disk.
+
+## Data contracts
+
+Defined and validated in `logiq/schemas.py`. All JSON is UTF-8 with `ensure_ascii=False`.
+
+`errors.json`
+```json
+{
+  "run_id": "string",
+  "app_name": "string",
+  "generated_at": "ISO-8601 UTC",
+  "errors": [
+    {
+      "id": "string",
+      "level": "ERROR | WARNING | EXCEPTION | CRITICAL | FATAL",
+      "message": "string",
+      "timestamp": "string | null",
+      "module": "string | null",
+      "stack_trace": "string | null",
+      "source_file": "string",
+      "line_no": 0,
+      "context_lines": ["string"]
+    }
+  ]
+}
+```
+
+`research.json`
+```json
+{
+  "run_id": "string",
+  "app_name": "string",
+  "generated_at": "ISO-8601 UTC",
+  "findings": [
+    {
+      "error_id": "string",
+      "likely_causes": ["string"],
+      "resolutions": ["string"],
+      "references": [
+        { "type": "web | glean | bmc_helix", "title": "string", "url_or_id": "string" }
+      ],
+      "confidence": "high | medium | low"
+    }
+  ]
+}
+```
+
+`resolution.json`
+```json
+{
+  "run_id": "string",
+  "app_name": "string",
+  "generated_at": "ISO-8601 UTC",
+  "summaries": [
+    {
+      "error_summary": "string",
+      "root_cause": "string",
+      "resolution_steps": ["string"],
+      "references": [
+        { "type": "web | glean | bmc_helix", "title": "string", "url_or_id": "string" }
+      ]
+    }
+  ]
+}
+```
+
+One entry per distinct error pattern (duplicate log lines collapsed).
+
+## Separation of concerns
+
+- Collector: reads input logs, writes `errors.json`. No research, no resolutions.
+- Researcher: read-only. Reads `errors.json`, researches, writes `research.json`. Never modifies logs, systems, or configs.
+- Synthesizer: reads `errors.json` + `research.json`, writes `resolution.json`. No web, no Glean, no DB, no modifications.

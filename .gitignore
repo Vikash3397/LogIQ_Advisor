@@ -1,0 +1,13 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# LogIQ run artifacts (keep the directory, ignore generated runs)
+data/runs/*
+!data/runs/.gitkeep
+
+# Local extraction scratch
+req_extracted.txt
