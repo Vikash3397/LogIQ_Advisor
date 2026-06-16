@@ -25,12 +25,13 @@ summaries:
 
 Pass per-error-id results to `synthesizer.persist_resolution(run_id, app_name, results)`.
 The helper deduplicates duplicate log lines and writes `resolution.json` with one entry per
-distinct error (`error_summary`, `root_cause`, `resolution_steps`, `references` only). You
-can use `synthesizer.build_join_index(run_id)` to get a per-error view joining each error
+distinct error (`error_summary`, `root_cause`, `resolution_steps`, `references` only). It also
+writes a human-readable `resolution.txt` report alongside the JSON in the same run directory.
+You can use `synthesizer.build_join_index(run_id)` to get a per-error view joining each error
 with its research finding.
 
-Finally, report the path to `resolution.json` and a one-line summary per distinct error
-(error -> root cause -> top resolution step).
+Finally, report the paths to `resolution.json` and `resolution.txt`, and a one-line summary
+per distinct error (error -> root cause -> top resolution step).
 
 ## Constraints (NO EXTERNAL CALLS)
 - Do NOT perform web searches.

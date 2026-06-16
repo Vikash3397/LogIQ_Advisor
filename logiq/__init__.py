@@ -5,6 +5,7 @@ Deterministic helpers used by the LogIQ Advisor agents:
 - ``schemas``: data contracts shared across the three pipeline stages.
 - ``io_utils``: run-directory management and JSON persistence.
 - ``synthesizer``: validate and persist the final resolution artifact.
+- ``report``: render ``resolution.json`` into a human-readable ``resolution.txt``.
 - ``orchestrate``: CLI entry point for the deterministic collector stage.
 """
 

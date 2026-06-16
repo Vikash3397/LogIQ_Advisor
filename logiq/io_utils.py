@@ -21,6 +21,7 @@ from typing import Any, Dict
 ERRORS_FILE = "errors.json"
 RESEARCH_FILE = "research.json"
 RESOLUTION_FILE = "resolution.json"
+RESOLUTION_REPORT_FILE = "resolution.txt"
 
 
 def project_root() -> Path:
@@ -99,6 +100,14 @@ def read_json(path: Path) -> Dict[str, Any]:
         return json.load(fh)
 
 
+def write_text(path: Path, text: str) -> Path:
+    """Write ``text`` as a UTF-8 file, creating parent directories as needed."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as fh:
+        fh.write(text)
+    return path
+
+
 def errors_path(run_id: str) -> Path:
     return run_path(run_id) / ERRORS_FILE
 
@@ -109,3 +118,7 @@ def research_path(run_id: str) -> Path:
 
 def resolution_path(run_id: str) -> Path:
     return run_path(run_id) / RESOLUTION_FILE
+
+
+def resolution_report_path(run_id: str) -> Path:
+    return run_path(run_id) / RESOLUTION_REPORT_FILE

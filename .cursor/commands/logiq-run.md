@@ -23,9 +23,11 @@ public web + the Glean MCP server `glean_default` (incl. BMC Helix ITSM) and wri
 
 ## Stage 3 - Synthesize
 Hand off to the `logiq-synthesize` agent with the `run_id`. It consolidates `errors.json`
-+ `research.json` into `data/runs/<run_id>/resolution.json` (one summary per distinct error).
++ `research.json` into `data/runs/<run_id>/resolution.json` (one summary per distinct error)
+and also writes a human-readable `data/runs/<run_id>/resolution.txt` report alongside it.
 No web/Glean/DB calls.
 
 ## Final report
-Print the `run_id`, the three artifact paths under `data/runs/<run_id>/`, and a concise
-per-distinct-error summary from `resolution.json`: error -> root cause -> top resolution step.
+Print the `run_id`, the artifact paths under `data/runs/<run_id>/` (`errors.json`,
+`research.json`, `resolution.json`, and `resolution.txt`), and a concise per-distinct-error
+summary from `resolution.json`: error -> root cause -> top resolution step.
